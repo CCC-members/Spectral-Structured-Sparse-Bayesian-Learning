@@ -12,6 +12,17 @@ disp("-->> Starting process analysis");
 addpath('data/');
 addpath('functions/');
 
+% On Linux run these command
+system('7z x data/Svv/Svv_files.zip');
+system('unzip Svv.zip');
+movefile('Svv.mat','data/Svv.mat');
+delete('Svv.zip');
+
+system('7z x data/Lvj/Lvj_files.zip');
+system('unzip Lvj.zip');
+movefile('Lvj.mat','data/Lvj.mat');
+delete('Lvj.zip');
+
 load('data/Lvj.mat');
 load('data/Svv.mat');
 load('data/mycolormap.mat');
@@ -20,7 +31,7 @@ Sc = load('data/Sc.mat');
 %%
 %% Calling Main fuction
 %%
-[s2j,sigma2j,Tjv,Svv,scaleJ,scaleLvj]   = sSSBLpp(Svv,Lvj);
+[s2j,sigma2j,Tjv,Svv,scaleJ,scaleLvj]   = sSSBLpp(Svv(:,:,1),Lvj);
 s2j                                     = sum(reshape(abs(s2j),3,length(Ke)/3),1)';
 stat                                    = sqrt(2)*s2j./sqrt(var(s2j));
 indms                                   = find(stat > sssblpp_th);
