@@ -16,17 +16,18 @@ disp("-->> Getting the data ready. Please wait.");
 if(~isfile('data/Svv.mat') || ~isfile('data/Lvj.mat'))
     if ismac
         try
-            
+            system('zip -s 0 data/Svv/Svv_files.zip --out Svv.zip');
+            system('zip -s 0 data/Lvj/Lvj_files.zip --out Lvj.zip');
         catch
             warning("Please Download The Unarchiver from https://apps.apple.com/us/app/the-unarchiver/id425424353?mt=12");
         end
     elseif isunix
-       system('7z x data/Svv/Svv_files.zip');      
-       system('7z x data/Lvj/Lvj_files.zip');       
+        system('7z x data/Svv/Svv_files.zip');
+        system('7z x data/Lvj/Lvj_files.zip');
     elseif ispc
         try
-            system('"C:\Program Files\7-Zip\7z.exe" e -o"'+pwd+'" "'+pwd+'\data\Svv\Svv_files.zip"');
-            system('"C:\Program Files\7-Zip\7z.exe" e -o"'+pwd+'" "'+pwd+'\data\Lvj\Lvj_files.zip"');
+            system(['"C:\Program Files\7-Zip\7z.exe" e -o"', pwd, '" "data\Svv\Svv_files.zip"']);
+            system(['"C:\Program Files\7-Zip\7z.exe" e -o"', pwd, '" "data\Lvj\Lvj_files.zip"']);
         catch
             warning("Please Download 7-zip from https://www.7-zip.org/");
         end
@@ -39,7 +40,7 @@ if(~isfile('data/Svv.mat') || ~isfile('data/Lvj.mat'))
     
     unzip('Lvj.zip');
     movefile('Lvj.mat','data/Lvj.mat');
-    delete('Lvj.zip');    
+    delete('Lvj.zip');
 end
 
 load('data/Lvj.mat');
