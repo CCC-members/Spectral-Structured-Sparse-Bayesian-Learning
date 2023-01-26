@@ -1,8 +1,23 @@
-
-
 %%
 %%  Spectral-Structured-Sparse-Bayesian-Learning Main function
 %%
+% Description
+% Inverse solutions are via Spectral Structured Sparse Bayesian Learning (ssSBL),
+% the extension of the nominal SBL to the cross-spectrum. 
+% ssSBL results in two orders of magnitude less distortions than state-of-the-art methods
+% for the standard ESI setup, which considers large-scale networks and 
+% low-density EEG (10-20 system) and is compared to high-density MEG and ECoG.
+%
+%
+% Authors:
+% - Deirel Paz Linares
+% - Eduardo Gonzalez Moreira
+% - Ariosky Areces Gonzalez
+% - Pedro A. Valdes Sosa
+%
+% Updated: Jan 26, 2023
+
+
 disp("=====================================================================");
 disp("    <<<<< Spectral-Structured-Sparse-Bayesian-Learning >>>>>");
 disp("=====================================================================");
