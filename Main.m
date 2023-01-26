@@ -13,19 +13,24 @@ addpath('data/');
 addpath('functions/');
 
 % On Linux run these command
-system('7z x data/Svv/Svv_files.zip');
-system('unzip Svv.zip');
-movefile('Svv.mat','data/Svv.mat');
-delete('Svv.zip');
-
-system('7z x data/Lvj/Lvj_files.zip');
-system('unzip Lvj.zip');
-movefile('Lvj.mat','data/Lvj.mat');
-delete('Lvj.zip');
+disp("-->> Getting the data ready. Please wait.");
+if(~isfile('data/Svv.mat'))
+    system('7z x data/Svv/Svv_files.zip');
+    system('unzip Svv.zip');
+    movefile('Svv.mat','data/Svv.mat');
+    delete('Svv.zip');
+end
+if(~isfile('data/Lvj.mat'))
+    system('7z x data/Lvj/Lvj_files.zip');
+    system('unzip Lvj.zip');
+    movefile('Lvj.mat','data/Lvj.mat');
+    delete('Lvj.zip');
+end
 
 load('data/Lvj.mat');
 load('data/Svv.mat');
 load('data/mycolormap.mat');
+load('data/labels.mat');
 Sc = load('data/Sc.mat');
 
 %%
