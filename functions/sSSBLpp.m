@@ -7,7 +7,12 @@ Ljv             = Lvj';
 %% Static parameters
 [p,q]           = size(Lvj);
 Ip              = spdiags(ones(p,1),0,p,p);
-a               = length(parcellation);
+parcell         = cell(length(Lvj)/3,1);
+for ar          = 1:length(Ke)/3
+    q0          = 3*(ar-1);
+    parcell{ar} = [q0+1;q0+2;q0+3];
+end
+a               = length(parcell);
 maxiter_outer   = 60;
 maxiter_inner   = 1;
 s_alpha         = q;
@@ -46,7 +51,7 @@ for count_gen = 1:q
 end
 % Update Gammas
 for area = 1:a
-    idx_area        = parcellation{area};
+    idx_area        = parcell{area};
     etha(idx_area)  = sqrt((1./4).^2+(alpha*rho).*sum(s2j(idx_area) + sigma2j_post(idx_area)))-1./4;
 end
 idx_etha            = find((s2j + sigma2j_post)<0);
@@ -93,7 +98,7 @@ for cont1 = 1:maxiter_outer
         end
         % Update Gammas
         for area = 1:a
-            idx_area                = parcellation{area};
+            idx_area                = parcell{area};
             etha(idx_area)          = sqrt((1./4).^2+(alpha*rho).*sum(s2j(idx_area) + sigma2j_post(idx_area)))-1./4;
         end
         idx_etha                    = find((s2j + sigma2j_post)<0);
@@ -112,19 +117,7 @@ for cont1 = 1:maxiter_outer
     fprintf(1,'\b\b\b\b%3.0f%%',(cont1)/(maxiter_outer)*100);
 end
 fprintf(1,'\n');
-%% Destandardization using a final pass solution
-disp("-->> Running sSSBL++ destandardization.");
-sigmajW                     = spdiags(sqrt(2*sigma2j),0,q,q)*W';
-Wsigma2jW                   = sum(sigmajW.^2,1)';
-sigma2jLjv                  = spdiags(2*sigma2j,0,q,q)*Ljv;
-sigma2j_post0               = (W*sigma2jLjv)/(LvjW*sigma2jLjv+sigma2x*Ip);
-Lvjsigma2j                  = sigma2jLjv';
-LvjWsigma2jW                = Lvjsigma2j*W';
 
-% Only save the diagonals of the Posterior Covariance
-for count_gen = 1:size(Lvj,2)
-    sigma2j_post(count_gen) = Wsigma2jW(count_gen) - sigma2j_post0(count_gen,:)*LvjWsigma2jW(:,count_gen);
-end
 
 % Iterative Transference Operator
 Tjv                        = (1/sigma2x).*(W*sigma2jLjv-sigma2j_post0*(Lvjsigma2j*Ljv));
