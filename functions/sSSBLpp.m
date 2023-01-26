@@ -8,7 +8,7 @@ Ljv             = Lvj';
 [p,q]           = size(Lvj);
 Ip              = spdiags(ones(p,1),0,p,p);
 parcell         = cell(length(Lvj)/3,1);
-for ar          = 1:length(Ke)/3
+for ar          = 1:length(Lvj)/3
     q0          = 3*(ar-1);
     parcell{ar} = [q0+1;q0+2;q0+3];
 end
