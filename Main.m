@@ -35,16 +35,23 @@ if(~isfile('data/Svv.mat') || ~isfile('data/Lvj.mat'))
             system('zip -s 0 data/Lvj/Lvj_files.zip --out Lvj.zip');
         catch
             warning("Please Download The Unarchiver from https://apps.apple.com/us/app/the-unarchiver/id425424353?mt=12");
+            return;
         end
     elseif isunix
-        system('7z x data/Svv/Svv_files.zip');
-        system('7z x data/Lvj/Lvj_files.zip');
+        try
+            system('7z x data/Svv/Svv_files.zip');
+            system('7z x data/Lvj/Lvj_files.zip');
+        catch
+            warning("Please Download 7-zip from https://www.7-zip.org/");
+            return;
+        end
     elseif ispc
         try
             system(['"C:\Program Files\7-Zip\7z.exe" e -o"', pwd, '" "data\Svv\Svv_files.zip"']);
             system(['"C:\Program Files\7-Zip\7z.exe" e -o"', pwd, '" "data\Lvj\Lvj_files.zip"']);
         catch
             warning("Please Download 7-zip from https://www.7-zip.org/");
+            return;
         end
     else
         disp('Platform not supported')
