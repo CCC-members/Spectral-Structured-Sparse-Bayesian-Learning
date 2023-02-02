@@ -4,7 +4,7 @@ function [s2j,sigma2j,Tjv,Svv,scaleJ,scaleLvj] = sSSBLpp(Svv,Lvj)
 % a frequency or a band of frequecy, eg. covariance matrix applied to the Hilbert
 % transform of filtered MEEG
 % Lvj a SX3G MEEG Lead Fied matrix
-% Elastic Net_Sparse Bayesian Learning
+
 Ljv             = Lvj';
 
 %% Static parameters
