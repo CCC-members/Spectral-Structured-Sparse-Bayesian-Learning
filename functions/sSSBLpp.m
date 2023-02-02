@@ -7,6 +7,9 @@ function [s2j,sigma2j,Tjv,Svv,scaleJ,scaleLvj] = sSSBLpp(Svv,Lvj)
 
 Ljv             = Lvj';
 
+
+
+
 %% Static parameters
 [p,q]           = size(Lvj);
 Ip              = spdiags(ones(p,1),0,p,p);
