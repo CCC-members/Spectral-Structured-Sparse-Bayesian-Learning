@@ -71,33 +71,14 @@ load('data/mycolormap.mat');
 load('data/labels.mat');
 Sc = load('data/Sc.mat');
 
-%% Estimating source directions
-% This step estimates for each source the optimal orientation at all 
-% frequencies. The orientation is an important anatomical constraint 
-% for the sources in order to lock the phase of their components in 
-% the x, and y, and z axis. Defining this constraint is very common 
-% the Grid orientation but this is not strictily valid.
-% Therefore, we propose to ssSBL user to first implementing a joint-MAP at 
-% all frequencies to estimate the source orientations.
-
-Svv_mean       = squeeze(mean(Svv(:,:,:),3)); % averaging cross-spectrum
-[Tjv3,s2jj3]   = sSSBLpp(Lvj,Svv_mean); % joint-MAP at all freqeuncies
-s2jj3          = reshape(s2jj3,3,length(Lvj)/3)'; % Obtaining source directions
-plot_sources(sqrt(sum(s2jj3,2)),Sc,cmap)
-hold on
-SourceNormals  = sqrt(s2jj3);
-SourceNormals  = SourceNormals./repmat(sqrt(sum(SourceNormals.^2,2)),1,3);
-VertNormals    = Sc.VertNormals; % Projecting SourceOrient to GridOrient
-SourceNormals  = sign(SourceNormals.*VertNormals).^SourceNormals;
-quiver3(Sc.Vertices(:,1),Sc.Vertices(:,2),Sc.Vertices(:,3),SourceNormals(:,1),SourceNormals(:,2),SourceNormals(:,3),'Color','b','AutoScaleFactor',3);
-quiver3(Sc.Vertices(:,1),Sc.Vertices(:,2),Sc.Vertices(:,3),VertNormals(:,1),VertNormals(:,2),VertNormals(:,3),'Color','k','AutoScaleFactor',3);
-SourceNormals  = blk_diag(SourceNormals', 1);
-Lvj            = Lvj
-
+%%
 %% Calling Main fuction
 %%
-% 
-[Tjv,s2jj3]   = sSSBLpp(Lvj,squeeze(Svv(:,:,105)));
+%% Constraining Lead Field orientations 
+N   = blk_diag(Sc.VertNormals', 1);
+Lvj = Lvj*N;
+[Tjv,s2jj3] = sSSBLpp(Lvj,squeeze(Svv(:,:,105)));
+Tjv = N*Tjv;
 s2jj                                    = sum(reshape(abs(s2jj3),3,length(Lvj)/3),1)';
 stat                                    = sqrt(2)*s2jj./sqrt(var(s2jj));
 indms                                   = find(stat > 1);
@@ -115,19 +96,21 @@ plot(bins,pdf,'LineWidth',2,'Color','r')
 legend('Empirical','Chi2');
 title('ssSBL-stat','Color','k','FontSize',16);
 
-%%
-function plot_sources(sources,Sc,cmap)
-sources                 = sources/max(sources(:));
+sources_iv              = sqrt(abs(s2jj));
+sources_iv              = sources_iv/max(sources_iv(:));
 figure_activation       = figure('Color','w','Name','ssSBL-activation-alpha-band','NumberTitle','off'); hold on;
-% smoothValue             = 0.66;
-% SurfSmoothIterations    = 10;
-% Vertices                = tess_smooth(Sc.Vertices, smoothValue, SurfSmoothIterations, Sc.VertConn, 1);
-patch('Faces',Sc.Faces,'Vertices',Sc.Vertices,'FaceVertexCData',Sc.SulciMap*0.06+...
-    log(1+sources),'FaceColor','interp','EdgeColor','none','FaceAlpha',.99);
+smoothValue             = 0.66;
+SurfSmoothIterations    = 10;
+Vertices                = tess_smooth(Sc.Vertices, smoothValue, SurfSmoothIterations, Sc.VertConn, 1);
+patch('Faces',Sc.Faces,'Vertices',Vertices,'FaceVertexCData',Sc.SulciMap*0.06+...
+    log(1+sources_iv),'FaceColor','interp','EdgeColor','none','FaceAlpha',.99);
 set(gca,'xcolor','w','ycolor','w','zcolor','w');
 az = 0; el = 0;
 view(az,el);
 rotate3d on;
 colormap(gca,cmap);
 title('ssSBL-activation','Color','k','FontSize',16);
-end
+    
+disp("=====================================================================");
+disp("-->> Process finished.");
+disp("=====================================================================");
