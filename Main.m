@@ -3,9 +3,9 @@
 %%
 % Description
 % Inverse solutions are via Spectral Structured Sparse Bayesian Learning (ssSBL),
-% the extension of the nominal SBL to the cross-spectrum. 
+% the extension of the nominal SBL to the cross-spectrum.
 % ssSBL results in two orders of magnitude less distortions than state-of-the-art methods
-% for the standard ESI setup, which considers large-scale networks and 
+% for the standard ESI setup, which considers large-scale networks and
 % low-density EEG (10-20 system) and is compared to high-density MEG and ECoG.
 %
 %
@@ -39,8 +39,8 @@ if(~isfile('data/Svv.mat') || ~isfile('data/Lvj.mat'))
         end
     elseif isunix
         
-         status = system('7z x data/Svv/Svv_files.zip');
-         system('7z x data/Lvj/Lvj_files.zip');
+        status = system('7z x data/Svv/Svv_files.zip');
+        system('7z x data/Lvj/Lvj_files.zip');
         if(~isequal(status,0))
             warning("Please Download 7-zip from https://www.7-zip.org/");
             return;
@@ -64,13 +64,12 @@ if(~isfile('data/Svv.mat') || ~isfile('data/Lvj.mat'))
     movefile('Lvj.mat','data/Lvj.mat');
     delete('Lvj.zip');
 end
-
-load('data/Lvj.mat');
-load('data/Svv.mat');
 load('data/mycolormap.mat');
 load('data/labels.mat');
-Sc = load('data/Sc.mat');
-
+load('data/Lvj.mat');
+load('data/Svv.mat');
+Sc    = load('data/Sc.mat');
+%
 %% Estimating source directions
 % This step estimates for each source the optimal orientation at all 
 % frequencies. The orientation is an important anatomical constraint 
@@ -79,55 +78,47 @@ Sc = load('data/Sc.mat');
 % the Grid orientation but this is not strictily valid.
 % Therefore, we propose to ssSBL user to first implementing a joint-MAP at 
 % all frequencies to estimate the source orientations.
-
-Svv_mean       = squeeze(mean(Svv(:,:,:),3)); % averaging cross-spectrum
-[Tjv3,s2jj3]   = sSSBLpp(Lvj,Svv_mean); % joint-MAP at all freqeuncies
-s2jj3          = reshape(s2jj3,3,length(Lvj)/3)'; % Obtaining source directions
-plot_sources(sqrt(sum(s2jj3,2)),Sc,cmap)
-hold on
-SourceNormals  = sqrt(s2jj3);
+%
+%% Initial ssSBL solution for all frequencies using 2D rotational invariance priors around surface orientation 
+Svv_mean       = squeeze(mean(Svv(:,:,:),3)); % averaging cross-spectrum across freqeuncies
+VN             = blk_diag(Sc.VertNormals', 1); % 2D rotational invariance prior 
+Lvj3D          = Lvj; % 3D Lead Field
+Lvj            = Lvj3D*VN; % projecting the 3D Lead Field
+[Tjv,s2jj]     = ssSBL(Lvj,Svv_mean); % joint-MAP at all frequencies 
+%
+%% Estimating source orientations
+Tjv3D          = VN*Tjv; % recovering 3D inverse operator
+SvvTvj3D       = Svv_mean*Tjv3D'; % recovering 3D source spectrum
+for g = 1:size(Lvj3D,2)
+    s2jj3D(g) = abs(Tjv3D(g,:)*SvvTvj3D(:,g));
+end
+SourceNormals  = reshape(s2jj3D,3,length(Lvj3D)/3)'; % recovering source orientations
+SourceNormals  = sqrt(SourceNormals);
 SourceNormals  = SourceNormals./repmat(sqrt(sum(SourceNormals.^2,2)),1,3);
-VertNormals    = Sc.VertNormals; % Projecting SourceOrient to GridOrient
-SourceNormals  = sign(SourceNormals.*VertNormals).^SourceNormals;
-quiver3(Sc.Vertices(:,1),Sc.Vertices(:,2),Sc.Vertices(:,3),SourceNormals(:,1),SourceNormals(:,2),SourceNormals(:,3),'Color','b','AutoScaleFactor',3);
-quiver3(Sc.Vertices(:,1),Sc.Vertices(:,2),Sc.Vertices(:,3),VertNormals(:,1),VertNormals(:,2),VertNormals(:,3),'Color','k','AutoScaleFactor',3);
-SourceNormals  = blk_diag(SourceNormals', 1);
-Lvj            = Lvj
-
-%% Calling Main fuction
-%%
-% 
-[Tjv,s2jj3]   = sSSBLpp(Lvj,squeeze(Svv(:,:,105)));
-s2jj                                    = sum(reshape(abs(s2jj3),3,length(Lvj)/3),1)';
-stat                                    = sqrt(2)*s2jj./sqrt(var(s2jj));
-indms                                   = find(stat > 1);
-sps2jj                                  = zeros(length(stat),1);
-sps2jj(indms)                           = s2jj(indms);
-%%
+SourceNormals  = repmat(sign(sum(SourceNormals.*Sc.VertNormals,2)),1,3).*SourceNormals;
+%
+%% Final ssSBL solution for a freqeuncy (alpha peak in this example) using 2D rotational invariance priors around source orientation
+SN         = blk_diag(SourceNormals', 1); % 2D rotational invariance prior 
+Lvj        = Lvj3D*SN; % projecting the 3D Lead Field
+[Tjv,s2jj] = ssSBL(Lvj,squeeze(Svv(:,:,105))); % joint-MAP at a frequency
+%
 %% Plotting results
-%%
-figure_stat             = figure('Color','w','Name','ssSBL-stat-alpha-band','NumberTitle','off'); 
-h                                       = histogram(stat,1000,'Normalization','pdf');
-bins                                    = h.BinEdges;
-pdf                                     = (1/(sqrt(2*pi)))*(bins.^(-1/2)).*exp(-bins/2);
-hold on;
-plot(bins,pdf,'LineWidth',2,'Color','r')
-legend('Empirical','Chi2');
-title('ssSBL-stat','Color','k','FontSize',16);
-
+figure_cortical_map = figure('Color','w','Name','cortical spectral topography','NumberTitle','off'); 
+plot_sources(s2jj/max(s2jj),Sc,cmap); % ploting spectrum
+%
 %%
 function plot_sources(sources,Sc,cmap)
-sources                 = sources/max(sources(:));
-figure_activation       = figure('Color','w','Name','ssSBL-activation-alpha-band','NumberTitle','off'); hold on;
-% smoothValue             = 0.66;
-% SurfSmoothIterations    = 10;
-% Vertices                = tess_smooth(Sc.Vertices, smoothValue, SurfSmoothIterations, Sc.VertConn, 1);
-patch('Faces',Sc.Faces,'Vertices',Sc.Vertices,'FaceVertexCData',Sc.SulciMap*0.06+...
+sources                 = sqrt(sources);
+smoothValue             = 0.86;
+SurfSmoothIterations    = 30;
+Vertices                = tess_smooth(Sc.Vertices, smoothValue, SurfSmoothIterations, Sc.VertConn, 1);
+patch('Faces',Sc.Faces,'Vertices',Vertices,'FaceVertexCData',Sc.SulciMap*0.06+...
     log(1+sources),'FaceColor','interp','EdgeColor','none','FaceAlpha',.99);
 set(gca,'xcolor','w','ycolor','w','zcolor','w');
-az = 0; el = 0;
+az = 0; 
+el = 0;
 view(az,el);
 rotate3d on;
 colormap(gca,cmap);
-title('ssSBL-activation','Color','k','FontSize',16);
+title('cortical spectral topography','Color','k','FontSize',16);
 end

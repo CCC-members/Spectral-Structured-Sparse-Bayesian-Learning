@@ -1,4 +1,4 @@
-function [Tjv,s2jj] = sSSBLpp(Lvj,Svv)
+function [Tjv,s2jj] = ssSBL(Lvj,Svv)
 %% Inputs
 %   Lvj - SXG electromagnetic forward operator or Lead Fied matrix with
 % S number of MEEG sensors and G number of Gray Matter sources. Lvj must
@@ -20,7 +20,7 @@ function [Tjv,s2jj] = sSSBLpp(Lvj,Svv)
 
 %% Start
 %
-[S,G]          = size(Lvj); % SX3G Lead Field size
+[S,G]          = size(Lvj); % SXG Lead Field size
 Iss             = spdiags(ones(S,1),0,S,S); % sensor diagonal matrix
 scaleLvj        = sqrt(trace(Lvj*Lvj')/S); % Frobenious norm of the Lead Field
 Lvj             = Lvj/scaleLvj; % scaling Lead Field
